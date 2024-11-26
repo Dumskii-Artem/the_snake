@@ -99,6 +99,17 @@ class Snake(GameObject):
         self.direction = RIGHT
         self.next_direction = None
 
+    def get_head_position(self):
+        """Вычисляем, где будет голова змеи. Мне не надо!"""
+        # другой вариант
+        # return self.next_head
+        return self.positions[0]
+
+    def update_direction(self):
+        """берем в работу то, что ввели на клавиатуре"""
+        if self.next_direction:
+            self.direction = self.next_direction
+
     def calc_next_head(self):
         """Вычисляем, где будет голова змеи"""
         # сейчас в self.next_head текущая голова змеи
@@ -196,8 +207,9 @@ def main():
 
     while True:
         handle_keys(snake)
-        if snake.next_direction:
-            snake.direction = snake.next_direction
+        snake.update_direction()
+#        if snake.next_direction:
+#            snake.direction = snake.next_direction
 
         snake.calc_next_head()
 
