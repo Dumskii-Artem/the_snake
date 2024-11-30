@@ -64,7 +64,7 @@ class CodeError(Exception):
 class GameObject:
     """Класс GameObject"""
 
-    def __init__(self, bg_color=None):
+    def __init__(self, bg_color=(0,0,0)):
         """инициализируем Объект"""
         self.body_color = bg_color
         self.position = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
@@ -86,7 +86,7 @@ class GameObject:
 class Apple(GameObject):
     """Класс Apple"""
 
-    def __init__(self, ocupied_seats):
+    def __init__(self, ocupied_seats=[]):
         GameObject.__init__(self, APPLE_COLOR)
         self.randomize_position(ocupied_seats)
 
