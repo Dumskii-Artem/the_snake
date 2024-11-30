@@ -213,7 +213,7 @@ def main():
 
         pg.display.set_caption(f'Змейка. Рекорд: {snake.max_length}'
                                f' (сейчас: {snake.length}).'
-                               ' SPEED(1/2) Стрелочки-играй. ESC - конец!')
+                               ' SPEED(1/2) Стрелочки-игра. ESC - конец!')
 
         pg.display.flip()
 
