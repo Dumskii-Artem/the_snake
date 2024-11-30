@@ -64,7 +64,7 @@ class CodeError(Exception):
 class GameObject:
     """Класс GameObject"""
 
-    def __init__(self, bg_color):
+    def __init__(self, bg_color=None):
         """инициализируем Объект"""
         self.body_color = bg_color
         self.position = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
