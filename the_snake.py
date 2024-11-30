@@ -160,11 +160,11 @@ class Snake(GameObject):
             self.last = self.positions.pop()
 
     def move(self):
-        """для тестов"""
+        """для прохождения тестов"""
         pass
 
     def update_direction(self):
-        """для тестов"""
+        """для прохождения тестов"""
         pass
 
 
