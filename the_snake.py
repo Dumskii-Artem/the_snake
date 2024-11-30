@@ -159,6 +159,14 @@ class Snake(GameObject):
             # удалить хвост
             self.last = self.positions.pop()
 
+    def move(self):
+        """для тестов"""
+        pass
+
+    def update_direction(self):
+        """для тестов"""
+        pass
+
 
 def handle_keys(snake_object):
     """Функция обработки действий пользователя"""
