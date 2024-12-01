@@ -72,7 +72,6 @@ class GameObject:
         rect = (pg.Rect(position, (GRID_SIZE, GRID_SIZE)))
         pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, rect)
 
-
     def draw(self):
         """Метод должен быть перегружен"""
         raise NotImplementedError('There isn\'t draw() method in class'
