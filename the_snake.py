@@ -33,8 +33,10 @@ pg.display.set_caption('Змейка. Поиграем!')
 # Настройка времени:
 clock = pg.time.Clock()
 
+# наш рекорд
+score = 1
 
-turns = {
+TURNS = {
     (UP, pg.K_RIGHT): RIGHT,
     (DOWN, pg.K_RIGHT): RIGHT,
     (RIGHT, pg.K_RIGHT): RIGHT,
@@ -49,8 +51,10 @@ turns = {
     (RIGHT, pg.K_DOWN): DOWN,
 }
 
-ALL_CELLS = set((x * GRID_SIZE, y * GRID_SIZE)
-                for x in range(GRID_WIDTH) for y in range(GRID_HEIGHT))
+ALL_CELLS = {(x * GRID_SIZE, y * GRID_SIZE)
+             for x in range(GRID_WIDTH)
+             for y in range(GRID_HEIGHT)
+             }
 
 
 class GameObject:
@@ -81,24 +85,21 @@ class GameObject:
 class Apple(GameObject):
     """Класс Apple"""
 
-    def __init__(self, bg_color=APPLE_COLOR, ocupied_seats=[]):
+    def __init__(self, bg_color=APPLE_COLOR, ocupied_cells=[]):
         super().__init__(bg_color)
-        self.randomize_position(ocupied_seats)
+        self.randomize_position(ocupied_cells)
 
-    def randomize_position(self, ocupied_seats):
+    def randomize_position(self, ocupied_cells):
         """Создаем новое яблоко. Нельзя класть яблоко на змею"""
-        self.position = choice(tuple(ALL_CELLS - set(ocupied_seats)))
+        self.position = choice(tuple(ALL_CELLS - set(ocupied_cells)))
 
     def draw(self):
         """Метод draw класса Apple"""
-        # **********************************************
         self.draw_cell(self.position)
 
 
 class Snake(GameObject):
     """Класс Snake"""
-
-    score = 1
 
     def __init__(self, bg_color=SNAKE_COLOR):
         super().__init__(bg_color)
@@ -111,6 +112,7 @@ class Snake(GameObject):
         self.last = None
         self.length = 1
         self.direction = RIGHT
+        self.next_direction = RIGHT
 
     def get_head_position(self):
         """Ищем змеиную голову"""
@@ -118,43 +120,38 @@ class Snake(GameObject):
 
     def move(self):
         """Кладем голову змеи на новое место"""
+        self.direction = self.next_direction
         head_pos_x, head_pos_y = self.get_head_position()
         direction_x, direction_y = self.direction
-        self.positions.insert(0, ((head_pos_x + direction_x * GRID_SIZE
-                                  + SCREEN_WIDTH) % (SCREEN_WIDTH),
-                                  (head_pos_y + direction_y * GRID_SIZE
-                                  + SCREEN_HEIGHT) % (SCREEN_HEIGHT)))
+        self.positions.insert(0,
+                              ((head_pos_x + direction_x * GRID_SIZE
+                               + SCREEN_WIDTH) % (SCREEN_WIDTH),
+                               (head_pos_y + direction_y * GRID_SIZE
+                               + SCREEN_HEIGHT) % (SCREEN_HEIGHT)))
+        self.last = self.positions.pop()
 
     def draw(self):
         """Рисуем змею (надо только кончики) тушка неподвижна"""
-        # Отрисовка головы змейки
-        self.draw_cell(self.get_head_position())
         # Затирание последнего сегмента
         if self.last:
             self.clear_cell(self.last)
+        # Отрисовка головы змейки
+        self.draw_cell(self.get_head_position())
 
-    def check_apple(self, apple_position):
-        """Здесь меняется длина змеи."""
-        if self.get_head_position() == apple_position:
-            self.last = None
-            self.length += 1
-            # фиксируем достижения
-            if self.length > self.score:
-                self.score = self.length
-            return True
-        else:
-            # удалить хвост
-            self.last = self.positions.pop()
-            return False
+    def restore_tail(self):
+        """Хвост остается. Здесь меняется длина змеи."""
+        self.positions.append(self.last)
+        self.last = None
+        self.length += 1
 
-    def update_direction(self, event_key):
-        """кнопками меняем направление движения змеи"""
-        self.direction = turns.get((self.direction, event_key), self.direction)
+    def update_direction(self, next_direction):
+        """сохраняем, куда нажата кнопка"""
+        self.next_direction = next_direction
 
 
 def handle_keys(snake_object):
     """Функция обработки действий пользователя"""
-    global current_speed
+    global current_speed, key_pressed
     for event in pg.event.get():
         if event.type == pg.QUIT:
             pg.quit()
@@ -164,44 +161,55 @@ def handle_keys(snake_object):
             if event.key == pg.K_ESCAPE:
                 pg.quit()
                 raise SystemExit
-            elif event.key == pg.K_1:
+            if event.key == pg.K_1:
                 current_speed *= 1.5
             elif event.key == pg.K_2:
                 current_speed /= 1.5
             else:
-                snake_object.update_direction(event.key)
+                # за одну перерисовку можно сюда попасть много раз
+                # срабатывает последнее выбранное направление.
+                # разворот считается движением прямо
+                snake_object.update_direction(
+                    TURNS.get((snake_object.direction, event.key),
+                              snake_object.direction))
 
 
 def main():
     """The mainest of main function"""
-    global current_speed
+    global current_speed, score
     # Инициализация pygame:
     pg.init()
     screen.fill(BOARD_BACKGROUND_COLOR)
     snake = Snake()
-    apple = Apple(ocupied_seats=snake.positions)
+    apple = Apple(ocupied_cells=snake.positions)
 
     while True:
         handle_keys(snake)
 
         snake.move()
 
-        if snake.get_head_position() in snake.positions[1:]:
+        # Змея длиной 4 или меньше не сможет себя укусить
+        if snake.get_head_position() in snake.positions[4:]:
             # Если укусили себя
             # Game Over. New Game!
             screen.fill(BOARD_BACKGROUND_COLOR)
             snake.reset()
             apple.randomize_position(snake.positions)
-        elif snake.check_apple(apple.position):
+        elif snake.get_head_position() == apple.position:
             # Укусили яблоко
+            snake.restore_tail()
             apple.randomize_position(snake.positions)
 
         snake.draw()
         apple.draw()
 
-        pg.display.set_caption(f'Змейка. Рекорд: {snake.score}'
+        # фиксируем достижения
+        if snake.length > score:
+            score = snake.length
+
+        pg.display.set_caption(f'Змейка. Рекорд: {score}'
                                f' (сейчас: {snake.length}).'
-                               ' SPEED(1/2) Стрелочки-игра. ESC - конец!')
+                               '   1-Speed Up, 2-Speed Down,   ESC - конец!')
 
         pg.display.flip()
 
